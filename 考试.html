@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        #box {
+            margin: 30px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            max-width: 400px;
+        }
+
+        #inp {
+            font-size: 16px;
+            padding: 10px 30px;
+            border: 1px solid #ccc;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #memo-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        #memo-list li {
+            font-size: 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        #memo-list li.done {
+            text-decoration: line-through;
+            color: #aaa;
+        }
+
+        #memo-list input[type="checkbox"] {
+            margin-right: 10px;
+            width: 20px;
+        }
+
+        #memo-list button {
+            margin-left: auto;
+        }
+
+
+        button {
+            background-color: white;
+            border-color: white;
+            margin-left: 20px
+        }
+
+        #all {
+            position: absolute;
+            top: 107px;
+            left: 150px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="box">
+        <h1>备忘录</h1>
+        <div id="bos">
+            <input type="checkbox" name="" id="all" />
+            <input type="text" name="" id="inp" placeholder="需要做什么？" />
+            <div id="div">
+                <ul id="memo-list"></ul>
+                <span href="#"><span id="num">0</span>个未完成</span>
+                <button href="#" id="searchAll">所有</button>
+                <button href="#" id="searchactive">未完成</button>
+                <button href="#" id="completed">已完成</button>
+                <button href="#" id="clearcompleted">清除已完成</button>
+            </div>
+        </div>
+    </div>
+    <script src="./code.jquery.com_jquery-3.7.0(1).js"></script>
+    <script>
+        let todolist = null;
+        const ul = document.querySelector("ul");
+        const num = document.getElementById("num");
+        (function () {
+            todolist = getLocalData("todolist");
+            showList();
+            $("#inp").on("keydown", addTodo);
+            $("#all").on("click", allFun);
+            $("ul").on("click", checkStatus);
+            $("#searchAll").on("click", searchAllFun);
+            $("#searchactive").on("click", searchactiveFun);
+            $("#completed").on("click", completedFun);
+            $("#clearcompleted").on("click", clearcompleteddFun);
+        })();
+
+        //筛选
+        function clearcompleteddFun() {
+            todolist = todolist.filter((item) => {
+                return item.status == false;
+            });
+            localStorage.setItem("todolist", JSON.stringify(todolist));
+            todolist = getLocalData("todolist");
+            showList(todolist);
+        }
+        function completedFun() {
+            let tmp = todolist.filter((item) => {
+                return item.status == true;
+            });
+            showList(tmp);
+        }
+        function searchAllFun() {
+            showList();
+        }
+        function searchactiveFun() {
+            let tmp = todolist.filter((item) => {
+                return item.status == false;
+            });
+            showList(tmp);
+        }
+        //全选
+        function allFun() {
+            console.log(this.checked);
+            todolist = todolist.map((item) => {
+                return {
+                    ...item,
+                    status: this.checked,
+                };
+            });
+            localStorage.setItem("todolist", JSON.stringify(todolist));
+            showList();
+        }
+        //点击复选框改变状态
+        function checkStatus() {
+            //console.log(event.target.dataset.id);
+            //找到id
+            if (event.target.nodeName == "INPUT") {
+                let id = event.target.dataset.id;
+                let index = todolist.findIndex((item) => {
+                    event.preventDefault();
+                    //当前循环的id与如果与点击的id相等就传过去 返回下标
+                    return item.id == event.target.dataset.id;
+                });
+                console.log(index);
+                //让他反向 是true反false  是false反true
+                todolist[index].status = !todolist[index].status;
+                localStorage.setItem("todolist", JSON.stringify(todolist));
+            }
+            if (event.target.nodeName == "A" && event.target.innerHTML == "❌") {
+                let index = todolist.findIndex((item) => {
+                    event.preventDefault();
+                    //当前循环的id与如果与点击的id相等就传过去 返回下标
+                    return item.id == event.target.dataset.id;
+                });
+                todolist.splice(index, 1);
+                console.log(todolist);
+                localStorage.setItem("todolist", JSON.stringify(todolist));
+            }
+            showList();
+        }
+        //添加一个
+        function addTodo() {
+            if (event.keyCode == 13) {
+                //回车
+                console.log(this.value);
+                let data = {
+                    con: this.value,
+                    status: false,
+                    id: new Date().getTime() + getRandomNm(),
+                };
+                if (this.value) {
+                    todolist.push(data);
+                }
+
+                localStorage.setItem("todolist", JSON.stringify(todolist));
+                showList();
+                this.value = "";
+            }
+
+        }
+        //4位随机数
+        function getRandomNm() {
+            return Math.floor(Math.random() * 10000);
+        }
+        //显示列表
+        function showList(dataobj = todolist) {
+            if (dataobj.length === 0) {
+                ul.innerHTML = "";
+                return;
+            }
+            let html = "";
+            dataobj.forEach((item, index) => {
+                html += `
+            <li data-id="${item.id}">
+              <input data-id="${item.id}" type="checkbox" style="float: left;" ${item.status ? "checked" : ""}>
+              <span class="${item.status ? "compulted" : ""}" style="  float: left;;display:block">${item.con}</span> 
+              <a href="#" data-id="${item.id}" style = '  float: right;'>❌</a>
+              </li>
+            `;
+            });
+            ul.innerHTML = html;
+
+            all.checked = todolist.every((item) => item.status);
+            //统计未完成
+            let tmp = todolist.filter((item) => {
+                return item.status == false;
+            });
+            num.innerHTML = tmp.length;
+        }
+        //获取数组
+        function getLocalData(key) {
+            let data = localStorage.getItem(key);
+            if (data) {
+                return JSON.parse(data);
+            } else {
+                return [];
+            }
+        }
+        console.log(getLocalData("todolist"));
+    </script>
+</body>
+
+</html>

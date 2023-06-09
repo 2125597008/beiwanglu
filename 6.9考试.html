@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.staticfile.org/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<style>
+    #memo-container {
+        margin: 30px auto;
+        padding: 20px;
+        border: 1px solid #ccc;
+        max-width: 600px;
+    }
+
+    h1 {
+        text-align: center;
+    }
+
+    #memo-input input[type="text"] {
+        font-size: 16px;
+        padding: 10px 30px;
+        border: 1px solid #ccc;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    #memo-list {
+        list-style: none;
+        padding: 0;
+        margin: 20px 0;
+    }
+
+    #memo-list li {
+        font-size: 16px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+    }
+
+    #memo-list li.done {
+        text-decoration: line-through;
+        color: #aaa;
+    }
+
+    #memo-list input[type="checkbox"] {
+        margin-right: 10px;
+    }
+
+    #memo-list button {
+        margin-left: auto;
+    }
+
+    #memo-footer {
+        display: flex;
+        align-items: center;
+    }
+
+    #memo-tab {
+        margin-left: auto;
+    }
+
+    #memo-tab button {
+        margin-right: 10px;
+    }
+
+    button {
+        background-color: white;
+        border-color: white;
+        color: black;
+    }
+
+    #xia {
+        position: absolute;
+        top: 12px;
+        left: 2px;
+        background-color: none;
+        border: none;
+    }
+
+    #memo-input {
+        position: relative;
+    }
+</style>
+
+<body>
+    <div id="memo-container">
+        <h1>备忘录</h1>
+        <div id="memo-input">
+            <button id="xia"><svg t="1686308139304" class="icon" viewBox="0 0 1024 1024" version="1.1"
+                    xmlns="http://www.w3.org/2000/svg" p-id="4927" width="16" height="16">
+                    <path
+                        d="M1.415529 511.766588a511.194353 511.194353 0 1 0 1022.396236 0 511.194353 511.194353 0 0 0-1022.396236 0z"
+                        fill="#A3A3A3" p-id="4928"></path>
+                    <path
+                        d="M512.617412 1022.960941c283.994353 0 511.194353-227.2 511.194353-511.194353C1023.811765 227.764706 796.611765 0.564706 512.617412 0.564706 228.615529 0.564706 1.415529 227.764706 1.415529 511.774118c0 283.994353 227.2 511.194353 511.201883 511.194353z m0-56.801882c-249.923765 0-454.4-204.476235-454.4-454.4 0-249.916235 204.476235-454.392471 454.4-454.392471 249.916235 0 454.4 204.476235 454.4 454.4 0 249.916235-204.483765 454.4-454.4 454.4z"
+                        fill="#2C2C2C" p-id="4929"></path>
+                    <path
+                        d="M405.579294 608.173176l59.467294-27.979294-59.467294-52.457411v80.436705z m0-76.935529L293.647059 433.317647v241.295059L514.017882 880.941176 737.882353 657.129412l-3.501177-223.811765-108.431058 97.92V143.058824H405.579294v388.178823z m157.409882 52.449882l59.459765 27.979295V534.731294l-59.459765 48.956235z m136.417883-69.940705l3.493647 132.894117-188.882824 185.344-185.389176-171.361882V513.746824l111.932235 97.92V181.526588h146.913883v426.646588l111.932235-94.418823z"
+                        fill="#000000" p-id="4930"></path>
+                    <path
+                        d="M704.248471 509.462588L591.653647 604.047059V173.176471H443.881412v430.870588L331.294118 509.462588v147.124706L517.767529 828.235294 707.764706 639.073882z"
+                        fill="#00FF00" p-id="4931"></path>
+                </svg></button>
+            <input type="text" placeholder="需要做什么？">
+        </div>
+        <ul id="memo-list"></ul>
+
+        <div id="memo-footer">
+            <span>当前未完成：<strong id="memo-undone-count">0</strong></span>
+            <div id="memo-tab">
+                <button data-tab="all" class="active">所有</button>
+                <button data-tab="undone">未完成</button>
+                <button data-tab="done">已完成</button>
+                <button id="memo-clear-all">清除所有</button>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    $(function () {
+        let memos = JSON.parse(localStorage.getItem('memos'));
+        function renderMemos() {
+            const $list = $('#memo-list');
+            $list.empty();
+            for (let i = 0; i < memos.length; i++) {
+                const memo = memos[i];
+                const $li = $('<li>').appendTo($list);
+                const $checkbox = $('<input type="checkbox">')
+                    .prop('checked', memo.done)
+                    .on('click', function () {
+                        memo.done = $(this).prop('checked');
+                        renderMemos();
+                    })
+                    .appendTo($li);
+                const $text = $('<span>')
+                    .text(memo.text)
+                    .addClass(memo.done ? 'done' : '')
+                    .appendTo($li);
+                const $button = $('<button>')
+                    .text('❌')
+                    .on('click', function () {
+                        memos.splice(i, 1);
+                        renderMemos();
+                    })
+                    .appendTo($li);
+            }
+
+            const undoneCount = memos.filter(memo => !memo.done).length;
+            $('#memo-undone-count').text(undoneCount);
+
+            const activeTab = $('#memo-tab button.active').data('tab');
+            filterMemos(activeTab);
+        }
+
+        function saveMemos() {
+            localStorage.setItem('memos', JSON.stringify(memos));
+        }
+
+        function filterMemos(tab) {
+            $('#memo-tab button').removeClass('active');
+            $(`#memo-tab button[data-tab="${tab}"]`).addClass('active');
+            switch (tab) {
+                case 'all':
+                    $('#memo-list li').show();
+                    break;
+                case 'undone':
+                    $('#memo-list li:not(.done)').show();
+                    $('#memo-list li.done').hide();
+                    break;
+                case 'done':
+                    $('#memo-list li.done').show();
+                    $('#memo-list li:not(.done)').hide();
+                    break;
+            }
+        }
+        // 添加备忘录
+        $('#memo-input input[type="text"]').on('keydown', function (event) {
+            if (event.keyCode === 13) {
+                const text = $(this).val().trim();
+                if (text) {
+                    memos.push({ text: text, done: false });
+                    $(this).val('');
+                    saveMemos();
+                    renderMemos();
+                }
+            }
+        });
+        $('#memo-clear-all').on('click', function () {
+            memos = memos.filter(memo => !memo.done);
+            saveMemos();
+            renderMemos();
+        });
+        renderMemos();
+    });
+
+</script>
+
+</html>
